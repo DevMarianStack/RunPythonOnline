@@ -1,50 +1,60 @@
-import json
-import subprocess
-import sys
-import io
-
-# Allowed packages for installation
-ALLOWED_PACKAGES = {
-    "discord.py", "psutil", "colorama", "requests", "numpy",
-    "pandas", "matplotlib", "scipy", "flask", "beautifulsoup4",
-    "pytest", "sqlalchemy", "jupyter", "sympy", "tensorflow",
-    "keras", "scikit-learn", "lxml", "pyyaml"
-}
-
-def install_package(package_name):
-    if package_name in ALLOWED_PACKAGES:
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
-            return f"Package '{package_name}' installed successfully."
-        except subprocess.CalledProcessError as e:
-            return f"Failed to install package '{package_name}': {e}"
-    else:
-        return f"Package '{package_name}' is not allowed."
-
-def safe_exec(code):
-    exec_globals = {"__builtins__": {}}
-    exec_locals = {}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Code Runner</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea { width: 100%; height: 200px; }
+        #output { white-space: pre-wrap; background-color: #f0f0f0; padding: 10px; border: 1px solid #ddd; }
+        #error { color: red; }
+        .links { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Python Code Executor</h1>
+    <textarea id="code" placeholder="Enter your Python code here"></textarea>
+    <br>
+    <input type="text" id="packages" placeholder="Enter package names (space-separated)">
+    <br>
+    <button onclick="runCode()">Run Code</button>
+    <div id="output"></div>
+    <div id="error"></div>
     
-    try:
-        exec(code, exec_globals, exec_locals)
-        return exec_locals.get("output", "No output")
-    except Exception as e:
-        return f"Error: {str(e)}"
+    <div class="links">
+        <button onclick="openLinks()">Visit GitHub</button>
+    </div>
 
-def handler(request):
-    data = request.json
-    code = data.get("code", "")
-    packages = data.get("packages", "").split()
-    
-    output = []
+    <script>
+        async function runCode() {
+            const code = document.getElementById('code').value;
+            const packages = document.getElementById('packages').value;
+            try {
+                const response = await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, packages })
+                });
+                const result = await response.json();
+                document.getElementById('output').textContent = result.output;
+                document.getElementById('error').textContent = "";
+            } catch (error) {
+                document.getElementById('error').textContent = `Error: ${error.message}`;
+            }
+        }
 
-    for package in packages:
-        output.append(install_package(package))
-
-    old_stdout = sys.stdout
-    sys.stdout = io.StringIO()
-    
-    output.append(safe_exec(code))
-    
-    sys.stdout = old_stdout
-    return json.dumps({"output": sys.stdout.getvalue(), "messages": output})
+        function openLinks() {
+            const githubUrl = "https://github.com/DevMarianStack";
+            const srcUrl = "https://github.com/DevMarianStack/RunPythonOnline";
+            const newWindow = window.open("", "_blank");
+            newWindow.document.write(`
+                <h1>GitHub</h1>
+                <p><a href="${githubUrl}" target="_blank">${githubUrl}</a></p>
+                <h2>Source Code</h2>
+                <p><a href="${srcUrl}" target="_blank">${srcUrl}</a></p>
+            `);
+        }
+    </script>
+</body>
+</html>
