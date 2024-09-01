@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "public/index.html", "use": "@vercel/static" },
+    { "src": "api/run.py", "use": "@vercel/python" }
+  ]
+}
